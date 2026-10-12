@@ -1,4 +1,4 @@
-package dev.kolombetm.payflow.playground;
+package playground;
 
 public class Greeter {
     public String greet(String name) {

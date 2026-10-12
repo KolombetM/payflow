@@ -1,4 +1,4 @@
-package dev.kolombetm.payflow.playground;
+package playground;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -11,6 +11,7 @@ public class ContainerPlayground {
         System.out.println("3. first getBean done");
         Greeter bean2 = context.getBean(Greeter.class);
         System.out.println(bean1 == bean2);
+        System.out.println(bean1.greet("Nick"));;
         context.close();
     }
 }

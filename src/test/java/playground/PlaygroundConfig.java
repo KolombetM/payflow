@@ -1,4 +1,4 @@
-package dev.kolombetm.payflow.playground;
+package playground;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
