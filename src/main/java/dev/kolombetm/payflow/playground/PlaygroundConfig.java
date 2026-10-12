@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 public class PlaygroundConfig {
 
     @Bean
-    Greeter Greeter() {
-        System.out.printf("Create greeter");
+    Greeter greeter() {
+        System.out.println("Create greeter");
         return new Greeter();
     }
 }

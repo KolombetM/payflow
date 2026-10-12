@@ -1,6 +1,5 @@
 package dev.kolombetm.payflow.playground;
 
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class ContainerPlayground {
@@ -10,5 +9,8 @@ public class ContainerPlayground {
         System.out.println("2. context created");
         Greeter bean1 = context.getBean(Greeter.class);
         System.out.println("3. first getBean done");
+        Greeter bean2 = context.getBean(Greeter.class);
+        System.out.println(bean1 == bean2);
+        context.close();
     }
 }
