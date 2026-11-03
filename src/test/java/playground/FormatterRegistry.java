@@ -18,10 +18,11 @@ public class FormatterRegistry {
     }
 
     public String format(String formatterName, String name) {
-        try {
-            return formatters.get(formatterName).format(name);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Formatter  " + formatterName + " not found");
+        NameFormatter formatter = formatters.get(formatterName);
+        if (formatter == null) {
+            throw new IllegalArgumentException("Formatter not found: " + formatterName);
         }
+
+         return formatter.format(name);
     }
 }
