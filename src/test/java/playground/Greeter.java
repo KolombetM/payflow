@@ -1,12 +1,13 @@
 package playground;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Greeter {
     private final NameFormatter nameFormatter;
 
-    public Greeter(NameFormatter nameFormatter){
+    public Greeter(@Qualifier("upperCaseNameFormatter") NameFormatter nameFormatter){
         this.nameFormatter = nameFormatter;
         System.out.println("Create greeter bean");
     }
