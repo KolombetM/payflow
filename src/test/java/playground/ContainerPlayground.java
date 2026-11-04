@@ -21,6 +21,11 @@ public class ContainerPlayground {
         for(String key : keys){
             System.out.println(formatterRegistry.format(key, "nick"));
         }
+
+        TicketPrinter ticketPrinter = context.getBean(TicketPrinter.class);
+        ticketPrinter.print();
+        ticketPrinter.print();
+        ticketPrinter.print();
         context.close();
     }
 }
