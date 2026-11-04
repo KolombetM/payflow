@@ -11,7 +11,7 @@ public class Ticket {
     private final String id;
 
     Ticket() {
-        this.id = UUID.randomUUID().toString();;
+        this.id = UUID.randomUUID().toString();
         System.out.println("Created Ticket with id: " + id);
     }
 

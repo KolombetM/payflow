@@ -1,5 +1,6 @@
 package playground;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -7,12 +8,12 @@ import org.springframework.stereotype.Component;
 @Scope("singleton")
 public class TicketPrinter {
 
-    private final Ticket ticket;
-    public TicketPrinter(Ticket ticket) {
-        this.ticket = ticket;
+    private final ObjectProvider<Ticket> tickets;
+    public TicketPrinter(ObjectProvider<Ticket> tickets) {
+        this.tickets = tickets;
     }
 
     public void print() {
-        System.out.println("Ticket Id: " + this.ticket.getId());
+        System.out.println("Ticket Id: " + this.tickets.getObject().getId());
     }
 }

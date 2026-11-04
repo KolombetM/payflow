@@ -26,6 +26,10 @@ public class ContainerPlayground {
         ticketPrinter.print();
         ticketPrinter.print();
         ticketPrinter.print();
+        Ticket t1 = context.getBean(Ticket.class);
+        Ticket t2 = context.getBean(Ticket.class);
+        System.out.println(t1 == t2);
+
         context.close();
     }
 }
