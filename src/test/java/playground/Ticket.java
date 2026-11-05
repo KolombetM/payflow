@@ -1,5 +1,7 @@
 package playground;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,16 @@ public class Ticket {
     Ticket() {
         this.id = UUID.randomUUID().toString();
         System.out.println("Created Ticket with id: " + id);
+    }
+
+    @PostConstruct
+    public void init(){
+        System.out.println("Ticket @PostConstruct");
+    }
+
+    @PreDestroy
+    public void destroy(){
+        System.out.println("Ticket @PreDestroy");
     }
 
     public String getId() {
