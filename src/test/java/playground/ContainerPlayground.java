@@ -35,6 +35,8 @@ public class ContainerPlayground {
         slowService.fastWork();
         slowService.doWorkTwice();
         System.out.println(slowService.getClass().getName());
+
+        slowService.doWorkTwiceViaWorker();
         context.close();
     }
 }
