@@ -23,12 +23,10 @@ public class TimedBeanPostProcessor implements BeanPostProcessor {
                         Object obj = null;
                         try {
                             obj = invocation.proceed();
-                        }  catch (Throwable throwable) {
+                            return obj;
+                        } finally {
                             System.out.println("[Timed] " + invocation.getMethod().getName() + " took " + (System.nanoTime() - t) / 1000000 + "ms");
-                            throw throwable;
                         }
-                        System.out.println("[Timed] " + invocation.getMethod().getName() + " took " + (System.nanoTime() - t) / 1000000 + "ms");
-                        return obj;
                     } else {
                         return invocation.proceed();
                     }
