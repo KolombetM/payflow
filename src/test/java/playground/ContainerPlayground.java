@@ -30,10 +30,11 @@ public class ContainerPlayground {
         Ticket t2 = context.getBean(Ticket.class);
         System.out.println(t1 == t2);
 
-        SlowService slowSerevice = context.getBean(SlowService.class);
-        slowSerevice.doWork();
-        slowSerevice.fastWork();
-        slowSerevice.doWorkTwice();
+        SlowService slowService = context.getBean(SlowService.class);
+        slowService.doWork();
+        slowService.fastWork();
+        slowService.doWorkTwice();
+        System.out.println(slowService.getClass().getName());
         context.close();
     }
 }
