@@ -5,4 +5,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,beans,conditions
+        include: health,info,beans,conditions,configprops
+  endpoint:
+    configprops:
+      show-values: always
+payflow:
+  limits:
+    currency: EUR
+    daily: 10000
+    per-transaction: 1000
