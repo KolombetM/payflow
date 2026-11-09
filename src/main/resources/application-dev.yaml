@@ -1,0 +1,3 @@
+payflow:
+  limits:
+    daily: 1000000
