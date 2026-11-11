@@ -11,6 +11,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -18,10 +19,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected @Nullable ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        Map<String, String> errors = new HashMap<>();
-        for (var errs : ex.getBindingResult().getFieldErrors()) {
-            errors.put(errs.getField(), errs.getDefaultMessage());
-        }
+        record FieldViolation(String field, String message) {}
+        List<FieldViolation> errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> new FieldViolation(e.getField(), e.getDefaultMessage()))
+                .toList();
         ProblemDetail problemDetail = ex.getBody();
         problemDetail.setDetail("Request validation failed");
         problemDetail.setProperty("errors", errors);
