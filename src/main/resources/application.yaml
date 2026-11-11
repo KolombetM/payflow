@@ -1,6 +1,9 @@
 spring:
   application:
     name: payflow
+  mvc:
+    problemdetails:
+      enabled: true
 management:
   endpoints:
     web:

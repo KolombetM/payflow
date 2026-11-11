@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AccountService {
-    Map<UUID, Account> accounts = new ConcurrentHashMap<>();
+    private final Map<UUID, Account> accounts = new ConcurrentHashMap<>();
 
     public Account createAccount(CreateAccountRequest request) {
         var account = new Account();

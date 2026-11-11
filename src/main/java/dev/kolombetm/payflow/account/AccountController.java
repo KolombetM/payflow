@@ -1,6 +1,6 @@
 package dev.kolombetm.payflow.account;
 
-import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +17,7 @@ public class AccountController {
     }
 
     @PostMapping
-    @ResponseBody
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<AccountResponse> createAccount(@RequestBody CreateAccountRequest request) {
+    public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request) {
         Account account = accountService.createAccount(request);
         return ResponseEntity
                 .created(URI.create("/accounts/" + account.getId()))
