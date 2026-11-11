@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile({"dev", "test"})
-public class MockKycProvider implements KycProviderInterface {
+public class MockKycProvider implements KycProvider {
     private static final Logger log = LoggerFactory.getLogger(MockKycProvider.class);
 
     public MockKycProvider() {
