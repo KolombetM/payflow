@@ -1,6 +1,5 @@
 package dev.kolombetm.payflow.account;
 
-import dev.kolombetm.payflow.payment.CreateDepositRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
