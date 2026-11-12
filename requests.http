@@ -3,8 +3,32 @@ Content-Type: application/json
 
 {"ownerName": "Nick", "currency": "EUR"}
 
-> {% client.global.set("accountId", response.body.id); %}
+> {% client.global.set("fromAccount", response.body.id); %}
 
 ###
 
-GET http://localhost:8080/accounts/{{accountId}}
+POST http://localhost:8080/accounts
+Content-Type: application/json
+
+{"ownerName": "MAX", "currency": "EUR"}
+
+> {% client.global.set("toAccount", response.body.id); %}
+
+###
+
+POST http://localhost:8080/payments
+Content-type: application/json
+
+{"fromAccountId": "{{fromAccount}}", "toAccountId": "{{toAccount}}", "amount": "100.0"}
+
+> {% client.global.set("payment", response.body.id); %}
+
+
+###
+GET http://localhost:8080/payments/{{payment}}
+
+###
+GET http://localhost:8080/accounts/{{fromAccount}}
+
+###
+GET http://localhost:8080/accounts/{{toAccount}}
