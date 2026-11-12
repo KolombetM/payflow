@@ -7,6 +7,6 @@ import java.util.UUID;
 
 public class PaymentExceedsPerTransactionLimitException extends BusinessRuleException {
     public PaymentExceedsPerTransactionLimitException(UUID  fromAccountId, UUID toAccountId, BigDecimal amount, BigDecimal paymentLimit) {
-        super("Payment from account: " + fromAccountId + " to account: " + toAccountId + " in amount of: " + amount + " exceeds the daily limit: " + paymentLimit);
+        super("Payment from account: " + fromAccountId + " to account: " + toAccountId + " in amount of: " + amount + " exceeds per transaction limit: " + paymentLimit);
     }
 }

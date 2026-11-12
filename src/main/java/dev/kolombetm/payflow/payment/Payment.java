@@ -10,6 +10,16 @@ public class Payment {
     private UUID toAccountId;
     private BigDecimal amount;
     private PaymentStatus status;
+
+    public PaymentType getPaymentType() {
+        return paymentType;
+    }
+
+    public void setPaymentType(PaymentType paymentType) {
+        this.paymentType = paymentType;
+    }
+
+    private PaymentType paymentType;
     private Instant createdAt;
 
     public UUID getFromAccountId() {

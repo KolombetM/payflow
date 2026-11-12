@@ -1,4 +1,4 @@
-package dev.kolombetm.payflow.payment;
+package dev.kolombetm.payflow.account;
 
 import dev.kolombetm.payflow.common.BusinessRuleException;
 
@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public class InsufficientFundsException extends BusinessRuleException {
     public InsufficientFundsException(UUID fromAccountId, BigDecimal amount, Currency currency) {
-        super("Account: " + fromAccountId + " doesn't have enough funds: " + amount + " " + currency);
+        super("Account: " + fromAccountId + " doesn't have enough funds. Requested: " + amount + " " + currency);
     }
 }

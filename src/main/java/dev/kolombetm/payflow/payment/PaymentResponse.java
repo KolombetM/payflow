@@ -10,9 +10,10 @@ public record PaymentResponse(
         UUID toAccountId,
         BigDecimal amount,
         PaymentStatus status,
+        PaymentType paymentType,
         Instant createdAt
 ) {
     public static PaymentResponse from(Payment payment) {
-        return new PaymentResponse(payment.getId(), payment.getFromAccountId(), payment.getToAccountId(), payment.getAmount(), payment.getStatus(), payment.getCreatedAt());
+        return new PaymentResponse(payment.getId(), payment.getFromAccountId(), payment.getToAccountId(), payment.getAmount(), payment.getStatus(), payment.getPaymentType(), payment.getCreatedAt());
     }
 }

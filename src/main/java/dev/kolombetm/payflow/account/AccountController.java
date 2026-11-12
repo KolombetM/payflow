@@ -1,5 +1,6 @@
 package dev.kolombetm.payflow.account;
 
+import dev.kolombetm.payflow.payment.CreateDepositRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,11 +28,5 @@ public class AccountController {
     @GetMapping("/{id}")
     public AccountResponse get(@PathVariable UUID id) {
         return AccountResponse.from(accountService.getById(id));
-    }
-
-    @PostMapping("/deposit")
-    public AccountResponse deposit(@Valid @RequestBody AddMoneyRequest request) {
-        return AccountResponse.from(accountService.deposit(request.accountId(), request.amount()));
-
     }
 }

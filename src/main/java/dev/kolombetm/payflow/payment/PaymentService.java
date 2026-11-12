@@ -38,9 +38,6 @@ public class PaymentService {
         if (request.amount().compareTo(paymentLimitsProperties.perTransaction()) > 0) {
             throw new PaymentExceedsPerTransactionLimitException(fromAccount.getId(), toAccount.getId(), request.amount(), paymentLimitsProperties.perTransaction());
         }
-        if (request.amount().compareTo(fromAccount.getBalance()) > 0) {
-            throw new InsufficientFundsException(fromAccount.getId(), request.amount(), fromAccount.getCurrency());
-        }
         accountService.withdraw(fromAccount.getId(), request.amount());
         accountService.deposit(toAccount.getId(), request.amount());
         Payment payment = new Payment();
@@ -49,6 +46,21 @@ public class PaymentService {
         payment.setToAccountId(toAccount.getId());
         payment.setAmount(request.amount());
         payment.setStatus(PaymentStatus.COMPLETED);
+        payment.setPaymentType(PaymentType.TRANSFER);
+        payment.setCreatedAt(Instant.now(clock));
+
+        payments.put(payment.getId(), payment);
+        return payment;
+    }
+
+    public Payment createDeposit(CreateDepositRequest request) {
+        accountService.deposit(request.accountId(), request.amount());
+        Payment payment = new Payment();
+        payment.setId(UUID.randomUUID());
+        payment.setToAccountId(request.accountId());
+        payment.setAmount(request.amount());
+        payment.setStatus(PaymentStatus.COMPLETED);
+        payment.setPaymentType(PaymentType.DEPOSIT);
         payment.setCreatedAt(Instant.now(clock));
 
         payments.put(payment.getId(), payment);
