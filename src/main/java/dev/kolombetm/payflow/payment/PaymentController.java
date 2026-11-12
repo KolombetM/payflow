@@ -1,5 +1,6 @@
 package dev.kolombetm.payflow.payment;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> createPayment(@RequestBody CreatePaymentRequest createPaymentRequest) {
+    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest createPaymentRequest) {
         Payment payment = paymentService.createPayment(createPaymentRequest);
         return ResponseEntity
                 .created(URI.create("/payments/" + payment.getId()))

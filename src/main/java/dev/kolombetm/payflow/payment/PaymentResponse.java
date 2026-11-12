@@ -13,6 +13,6 @@ public record PaymentResponse(
         Instant createAt
 ) {
     public static PaymentResponse from(Payment payment) {
-        return new PaymentResponse(payment.getId(), payment.getFromAccountId(), payment.getToAccountId(), payment.getAmount(), payment.getStatus(), payment.getCreateAt());
+        return new PaymentResponse(payment.getId(), payment.getFromAccountId(), payment.getToAccountId(), payment.getAmount(), payment.getStatus(), payment.getCreatedAt());
     }
 }

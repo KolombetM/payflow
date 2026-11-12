@@ -10,7 +10,7 @@ public class Payment {
     private UUID toAccountId;
     private BigDecimal amount;
     private PaymentStatus status;
-    private Instant createAt;
+    private Instant createdAt;
 
     public UUID getFromAccountId() {
         return fromAccountId;
@@ -44,12 +44,12 @@ public class Payment {
         this.status = status;
     }
 
-    public Instant getCreateAt() {
-        return createAt;
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreateAt(Instant createAt) {
-        this.createAt = createAt;
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 
     public UUID getId() {

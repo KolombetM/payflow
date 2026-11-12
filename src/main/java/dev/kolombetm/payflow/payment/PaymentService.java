@@ -34,7 +34,7 @@ public class PaymentService {
         payment.setToAccountId(toAccount.getId());
         payment.setAmount(request.amount());
         payment.setStatus(PaymentStatus.COMPLETED);
-        payment.setCreateAt(Instant.now(clock));
+        payment.setCreatedAt(Instant.now(clock));
 
         payments.put(payment.getId(), payment);
         return payment;
