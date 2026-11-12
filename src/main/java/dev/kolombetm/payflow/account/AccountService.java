@@ -25,4 +25,8 @@ public class AccountService {
     public Optional<Account> findById(UUID id) {
         return Optional.ofNullable(accounts.get(id));
     }
+
+    public Account getById(UUID id) {
+        return findById(id).orElseThrow(() -> new AccountNotFoundException(id));
+    }
 }

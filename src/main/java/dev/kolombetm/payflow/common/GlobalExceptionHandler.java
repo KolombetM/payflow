@@ -1,11 +1,13 @@
 package dev.kolombetm.payflow.common;
 
+import dev.kolombetm.payflow.account.AccountNotFoundException;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -25,5 +27,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problemDetail.setDetail("Request validation failed");
         problemDetail.setProperty("errors", errors);
         return ResponseEntity.badRequest().body(problemDetail);
+    }
+
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ProblemDetail handleAccountNotFound(AccountNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(404), ex.getMessage());
     }
 }

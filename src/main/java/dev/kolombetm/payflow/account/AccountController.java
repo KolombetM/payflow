@@ -25,10 +25,7 @@ public class AccountController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponse> get(@PathVariable UUID id) {
-        return accountService.findById(id)
-                .map(AccountResponse::from)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public AccountResponse get(@PathVariable UUID id) {
+        return AccountResponse.from(accountService.getById(id));
     }
 }
