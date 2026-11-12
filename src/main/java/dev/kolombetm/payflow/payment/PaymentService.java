@@ -17,17 +17,32 @@ public class PaymentService {
     private final AccountService accountService;
     private final Clock clock;
     private final Map<UUID, Payment> payments = new ConcurrentHashMap<>();
+    private final PaymentLimitsProperties paymentLimitsProperties;
 
-    public PaymentService(AccountService accountService, Clock clock) {
+    public PaymentService(AccountService accountService, Clock clock, PaymentLimitsProperties paymentLimitsProperties) {
         this.accountService = accountService;
         this.clock = clock;
+        this.paymentLimitsProperties = paymentLimitsProperties;
     }
 
     public Payment createPayment(CreatePaymentRequest request) {
         Account fromAccount = this.accountService.getById(request.fromAccountId());
         Account toAccount = this.accountService.getById(request.toAccountId());
-        fromAccount.setBalance(fromAccount.getBalance().subtract(request.amount()));
-        toAccount.setBalance(toAccount.getBalance().add(request.amount()));
+
+        if (fromAccount.getId().equals(toAccount.getId())) {
+            throw new SameAccountTransferException(fromAccount.getId());
+        }
+        if (!fromAccount.getCurrency().equals(toAccount.getCurrency())) {
+            throw new DifferentCurrencyException(fromAccount.getId(), fromAccount.getCurrency(), toAccount.getId(), toAccount.getCurrency());
+        }
+        if (request.amount().compareTo(paymentLimitsProperties.perTransaction()) > 0) {
+            throw new PaymentExceedsPerTransactionLimitException(fromAccount.getId(), toAccount.getId(), request.amount(), paymentLimitsProperties.perTransaction());
+        }
+        if (request.amount().compareTo(fromAccount.getBalance()) > 0) {
+            throw new InsufficientFundsException(fromAccount.getId(), request.amount(), fromAccount.getCurrency());
+        }
+        accountService.withdraw(fromAccount.getId(), request.amount());
+        accountService.deposit(toAccount.getId(), request.amount());
         Payment payment = new Payment();
         payment.setId(UUID.randomUUID());
         payment.setFromAccountId(fromAccount.getId());

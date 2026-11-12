@@ -29,4 +29,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleNotFound(NotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ProblemDetail handleBusinessRule(BusinessRuleException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
+    }
 }

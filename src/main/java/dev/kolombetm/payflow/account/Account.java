@@ -30,7 +30,7 @@ public class Account {
         return balance;
     }
 
-    public void setBalance(BigDecimal balance) {
+    protected void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
 

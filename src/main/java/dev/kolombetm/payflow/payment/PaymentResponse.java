@@ -10,7 +10,7 @@ public record PaymentResponse(
         UUID toAccountId,
         BigDecimal amount,
         PaymentStatus status,
-        Instant createAt
+        Instant createdAt
 ) {
     public static PaymentResponse from(Payment payment) {
         return new PaymentResponse(payment.getId(), payment.getFromAccountId(), payment.getToAccountId(), payment.getAmount(), payment.getStatus(), payment.getCreatedAt());

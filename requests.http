@@ -10,25 +10,83 @@ Content-Type: application/json
 POST http://localhost:8080/accounts
 Content-Type: application/json
 
-{"ownerName": "MAX", "currency": "EUR"}
+{"ownerName": "Max", "currency": "EUR"}
 
 > {% client.global.set("toAccount", response.body.id); %}
+
+###
+
+POST http://localhost:8080/accounts
+Content-Type: application/json
+
+{"ownerName": "Bob", "currency": "CAD"}
+
+> {% client.global.set("CadAccount", response.body.id); %}
 
 ###
 
 POST http://localhost:8080/payments
 Content-type: application/json
 
-{"fromAccountId": "{{fromAccount}}", "toAccountId": "{{toAccount}}", "amount": "100.0"}
+{"fromAccountId": "{{fromAccount}}", "toAccountId": "{{fromAccount}}", "amount": "100"}
+
+###
+
+POST http://localhost:8080/payments
+Content-type: application/json
+
+{"fromAccountId": "{{fromAccount}}", "toAccountId": "{{toAccount}}", "amount": "100"}
+
+###
+
+POST http://localhost:8080/accounts/deposit
+Content-Type: application/json
+
+{"accountId": "{{fromAccount}}", "amount": "100000"}
+
+###
+
+POST http://localhost:8080/accounts/deposit
+Content-Type: application/json
+
+{"accountId": "{{CadAccount}}", "amount": "500"}
+
+###
+
+POST http://localhost:8080/payments
+Content-type: application/json
+
+{"fromAccountId": "{{CadAccount}}", "toAccountId": "{{toAccount}}", "amount": "100"}
+
+###
+
+POST http://localhost:8080/payments
+Content-type: application/json
+
+{"fromAccountId": "{{fromAccount}}", "toAccountId": "{{toAccount}}", "amount": "10001"}
+
+###
+
+POST http://localhost:8080/payments
+Content-type: application/json
+
+{"fromAccountId": "{{fromAccount}}", "toAccountId": "{{toAccount}}", "amount": "100"}
 
 > {% client.global.set("payment", response.body.id); %}
 
-
 ###
+
+
 GET http://localhost:8080/payments/{{payment}}
 
 ###
+
 GET http://localhost:8080/accounts/{{fromAccount}}
 
 ###
+
 GET http://localhost:8080/accounts/{{toAccount}}
+
+###
+
+GET http://localhost:8080/accounts/{{CadAccount}}

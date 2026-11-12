@@ -10,5 +10,5 @@ import java.util.UUID;
 public record CreatePaymentRequest(
         @NotNull UUID fromAccountId,
         @NotNull UUID toAccountId,
-        @NotNull @DecimalMin("0.01") @Digits(integer = Integer.MAX_VALUE, fraction = 2) BigDecimal amount){
+        @NotNull @DecimalMin("0.01") @Digits(integer = 12, fraction = 2) BigDecimal amount){
 }
