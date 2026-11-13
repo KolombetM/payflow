@@ -4,8 +4,11 @@ import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +40,10 @@ public class PaymentService {
         }
         if (request.amount().compareTo(paymentLimitsProperties.perTransaction()) > 0) {
             throw new PaymentExceedsPerTransactionLimitException(fromAccount.getId(), toAccount.getId(), request.amount(), paymentLimitsProperties.perTransaction());
+        }
+        BigDecimal spentToday = getSpentToday(fromAccount.getId());
+        if (request.amount().add(spentToday).compareTo(this.paymentLimitsProperties.daily()) > 0) {
+            throw new DailyLimitExceededException(fromAccount.getId(), fromAccount.getCurrency(), spentToday, request.amount());
         }
         accountService.withdraw(fromAccount.getId(), request.amount());
         accountService.deposit(toAccount.getId(), request.amount());
@@ -73,5 +80,20 @@ public class PaymentService {
 
     public Payment getById(UUID id) {
         return findById(id).orElseThrow(() -> new PaymentNotFoundException(id));
+    }
+
+    private BigDecimal getSpentToday(UUID accountId) {
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        Instant startOfDay = LocalDate.now(clock).atStartOfDay().toInstant(ZoneOffset.UTC);
+        for (Payment payment : payments.values()) {
+            if (payment.getFromAccountId() != null
+                && payment.getFromAccountId().equals(accountId)
+                && payment.getPaymentType().equals(PaymentType.TRANSFER)
+                && payment.getStatus().equals(PaymentStatus.COMPLETED)
+                && payment.getCreatedAt().isAfter(startOfDay)) {
+                totalAmount = totalAmount.add(payment.getAmount());
+            }
+        }
+        return totalAmount;
     }
 }
