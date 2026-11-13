@@ -43,7 +43,7 @@ public class PaymentService {
         }
         BigDecimal spentToday = getSpentToday(fromAccount.getId());
         if (request.amount().add(spentToday).compareTo(this.paymentLimitsProperties.daily()) > 0) {
-            throw new DailyLimitExceededException(fromAccount.getId(), fromAccount.getCurrency(), spentToday, request.amount());
+            throw new DailyLimitExceededException(fromAccount.getId(), fromAccount.getCurrency(), spentToday, request.amount(), paymentLimitsProperties.daily());
         }
         accountService.withdraw(fromAccount.getId(), request.amount());
         accountService.deposit(toAccount.getId(), request.amount());
@@ -84,13 +84,13 @@ public class PaymentService {
 
     private BigDecimal getSpentToday(UUID accountId) {
         BigDecimal totalAmount = BigDecimal.ZERO;
-        Instant startOfDay = LocalDate.now(clock).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant startOfDay = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
         for (Payment payment : payments.values()) {
             if (payment.getFromAccountId() != null
                 && payment.getFromAccountId().equals(accountId)
                 && payment.getPaymentType().equals(PaymentType.TRANSFER)
                 && payment.getStatus().equals(PaymentStatus.COMPLETED)
-                && payment.getCreatedAt().isAfter(startOfDay)) {
+                && !payment.getCreatedAt().isBefore(startOfDay)) {
                 totalAmount = totalAmount.add(payment.getAmount());
             }
         }
