@@ -17,3 +17,8 @@ payflow:
     currency: EUR
     daily: 10000
     per-transaction: 1000
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
