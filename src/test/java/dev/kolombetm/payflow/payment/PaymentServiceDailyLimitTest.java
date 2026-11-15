@@ -40,9 +40,6 @@ public class PaymentServiceDailyLimitTest {
 
     @Test
     void paymentUpToExactlyTheDailyLimitIsAllowed() {
-        Clock clock = Clock.fixed(Instant.parse("2026-11-14T10:00:00Z"), ZoneOffset.UTC);
-        PaymentService paymentService = new PaymentService(accountService, clock, limits);
-
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
         Payment payment = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("500")));
@@ -75,7 +72,6 @@ public class PaymentServiceDailyLimitTest {
     @Test
     void paymentMadeExactlyAtMidnightCountsTowardsThatDay() {
         clock.setInstant(Instant.parse("2026-11-15T00:00:00Z"));
-        PaymentService paymentService = new PaymentService(accountService, clock, limits);
 
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
