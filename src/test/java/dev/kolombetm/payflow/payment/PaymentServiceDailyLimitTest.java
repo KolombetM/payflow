@@ -3,6 +3,7 @@ package dev.kolombetm.payflow.payment;
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
 import dev.kolombetm.payflow.account.CreateAccountRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -15,25 +16,32 @@ import static org.assertj.core.api.Assertions.*;
 
 public class PaymentServiceDailyLimitTest {
 
-    private final BigDecimal DAILY_LIMIT = new BigDecimal("2500");
-    private final BigDecimal PER_TRANSACTION_LIMIT = new BigDecimal("1000");
-    private final Currency DEFAULT_CURRENCY = Currency.getInstance("EUR");
+    private static final BigDecimal DAILY_LIMIT = new BigDecimal("2500");
+    private static final BigDecimal PER_TRANSACTION_LIMIT = new BigDecimal("1000");
+    private static final Currency DEFAULT_CURRENCY = Currency.getInstance("EUR");
 
-    private final AccountService accountService = new AccountService();
     private final PaymentLimitsProperties limits = new PaymentLimitsProperties(
             DAILY_LIMIT, PER_TRANSACTION_LIMIT, DEFAULT_CURRENCY);
+
+    private final AccountService accountService = new AccountService();
+    private final MutableClock clock = new MutableClock(Instant.parse("2026-11-14T10:00:00Z"), ZoneOffset.UTC);
+    private final PaymentService paymentService = new PaymentService(accountService, clock, limits);
+
+    private Account fromAccount;
+    private Account toAccount;
+
+    @BeforeEach
+    void setUp() {
+        fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", DEFAULT_CURRENCY));
+        toAccount = accountService.createAccount(new CreateAccountRequest("Rick", DEFAULT_CURRENCY));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
+    }
 
 
     @Test
     void paymentUpToExactlyTheDailyLimitIsAllowed() {
         Clock clock = Clock.fixed(Instant.parse("2026-11-14T10:00:00Z"), ZoneOffset.UTC);
         PaymentService paymentService = new PaymentService(accountService, clock, limits);
-
-        CreateAccountRequest fromAccountRequest = new CreateAccountRequest("Bob", Currency.getInstance("EUR"));
-        CreateAccountRequest toAccountRequest = new CreateAccountRequest("Rick", Currency.getInstance("EUR"));
-        Account fromAccount = accountService.createAccount(fromAccountRequest);
-        Account toAccount = accountService.createAccount(toAccountRequest);
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
 
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
@@ -44,62 +52,38 @@ public class PaymentServiceDailyLimitTest {
 
     @Test
     void paymentOverTheDailyLimitIsDeclined() {
-        Clock clock = Clock.fixed(Instant.parse("2026-11-14T10:00:00Z"), ZoneOffset.UTC);
-        PaymentService paymentService = new PaymentService(accountService, clock, limits);
-
-        CreateAccountRequest fromAccountRequest = new CreateAccountRequest("Bob", Currency.getInstance("EUR"));
-        CreateAccountRequest toAccountRequest = new CreateAccountRequest("Rick", Currency.getInstance("EUR"));
-        Account fromAccount = accountService.createAccount(fromAccountRequest);
-        Account toAccount = accountService.createAccount(toAccountRequest);
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
-
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        assertThatThrownBy(() -> {
-            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        })
+        assertThatThrownBy(() ->
+            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")))
+        )
         .isInstanceOf(DailyLimitExceededException.class);
     }
 
     @Test
     void limitResetsAtMidnightUtc() {
-        MutableClock clock = new MutableClock(Instant.parse("2026-11-14T23:59:59Z"), ZoneOffset.UTC);
-        PaymentService paymentService = new PaymentService(accountService, clock, limits);
-
-        CreateAccountRequest fromAccountRequest = new CreateAccountRequest("Bob", Currency.getInstance("EUR"));
-        CreateAccountRequest toAccountRequest = new CreateAccountRequest("Rick", Currency.getInstance("EUR"));
-        Account fromAccount = accountService.createAccount(fromAccountRequest);
-        Account toAccount = accountService.createAccount(toAccountRequest);
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
+        clock.setInstant(Instant.parse("2026-11-14T23:59:59Z"));
 
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
 
         clock.setInstant(Instant.parse("2026-11-15T00:00:00Z"));
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        Payment payment = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     }
 
     @Test
     void paymentMadeExactlyAtMidnightCountsTowardsThatDay() {
-        // часы: 2026-11-15T00:00:00Z
-        MutableClock clock = new MutableClock(Instant.parse("2026-11-15T00:00:00Z"), ZoneOffset.UTC);
+        clock.setInstant(Instant.parse("2026-11-15T00:00:00Z"));
         PaymentService paymentService = new PaymentService(accountService, clock, limits);
 
-        CreateAccountRequest fromAccountRequest = new CreateAccountRequest("Bob", Currency.getInstance("EUR"));
-        CreateAccountRequest toAccountRequest = new CreateAccountRequest("Rick", Currency.getInstance("EUR"));
-        Account fromAccount = accountService.createAccount(fromAccountRequest);
-        Account toAccount = accountService.createAccount(toAccountRequest);
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
-        // два перевода по 1000 ровно в полночь
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
 
-        // часы: 2026-11-15T12:00:00Z
         clock.setInstant(Instant.parse("2026-11-15T12:00:00Z"));
-        // перевод на 1000 — должен быть отклонён (1000 + 1000 + 1000 > 2500)
-        assertThatThrownBy(() -> {
-            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        })
+        assertThatThrownBy(() ->
+            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")))
+        )
         .isInstanceOf(DailyLimitExceededException.class);
     }
 
