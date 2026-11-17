@@ -36,7 +36,7 @@ public class PaymentServiceDailyLimitTest {
     private Account toAccount;
 
     @TestConfiguration
-    static class Clock {
+    static class TestClockConfig {
         @Bean
         @Primary
         public MutableClock mutableClock(){
@@ -47,6 +47,7 @@ public class PaymentServiceDailyLimitTest {
 
     @BeforeEach
     void setUp() {
+        clock.setInstant(Instant.parse("2026-11-14T10:00:00Z"));
         fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", limits.currency()));
         toAccount = accountService.createAccount(new CreateAccountRequest("Rick", limits.currency()));
         paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
