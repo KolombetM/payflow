@@ -16,20 +16,21 @@ public class Account {
     private BigDecimal balance;
     private Currency currency;
 
+    protected Account(){}
+
+    public Account(String ownerName, Currency currency) {
+        this.id = UUID.randomUUID();
+        this.ownerName = ownerName;
+        this.currency = currency;
+        this.balance = BigDecimal.ZERO;
+    }
+
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
     public String getOwnerName() {
         return ownerName;
-    }
-
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
     }
 
     public BigDecimal getBalance() {
@@ -42,9 +43,5 @@ public class Account {
 
     public Currency getCurrency() {
         return currency;
-    }
-
-    public void setCurrency(Currency currency) {
-        this.currency = currency;
     }
 }
