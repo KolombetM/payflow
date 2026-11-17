@@ -5,35 +5,50 @@ import dev.kolombetm.payflow.account.AccountService;
 import dev.kolombetm.payflow.account.CreateAccountRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Currency;
 
 import static org.assertj.core.api.Assertions.*;
 
+@SpringBootTest(properties = {"payflow.limits.daily=2500", "payflow.limits.per-transaction=1000", "payflow.limits.currency=EUR"})
+@ActiveProfiles("dev")
 public class PaymentServiceDailyLimitTest {
+    @Autowired
+    private PaymentLimitsProperties limits;
+    @Autowired
+    private AccountService accountService;
+    @Autowired
+    private PaymentService paymentService;
 
-    private static final BigDecimal DAILY_LIMIT = new BigDecimal("2500");
-    private static final BigDecimal PER_TRANSACTION_LIMIT = new BigDecimal("1000");
-    private static final Currency DEFAULT_CURRENCY = Currency.getInstance("EUR");
+    @Autowired
+    private MutableClock clock;
 
-    private final PaymentLimitsProperties limits = new PaymentLimitsProperties(
-            DAILY_LIMIT, PER_TRANSACTION_LIMIT, DEFAULT_CURRENCY);
-
-    private final AccountService accountService = new AccountService();
-    private final MutableClock clock = new MutableClock(Instant.parse("2026-11-14T10:00:00Z"), ZoneOffset.UTC);
-    private final PaymentService paymentService = new PaymentService(accountService, clock, limits);
 
     private Account fromAccount;
     private Account toAccount;
 
+    @TestConfiguration
+    static class Clock {
+        @Bean
+        @Primary
+        public MutableClock mutableClock(){
+            return new MutableClock(Instant.parse("2026-11-14T10:00:00Z"), ZoneOffset.UTC);
+        }
+    }
+
+
     @BeforeEach
     void setUp() {
-        fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", DEFAULT_CURRENCY));
-        toAccount = accountService.createAccount(new CreateAccountRequest("Rick", DEFAULT_CURRENCY));
+        fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", limits.currency()));
+        toAccount = accountService.createAccount(new CreateAccountRequest("Rick", limits.currency()));
         paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
     }
 
