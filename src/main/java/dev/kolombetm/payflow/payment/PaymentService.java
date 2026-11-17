@@ -8,24 +8,22 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PaymentService {
 
     private final AccountService accountService;
     private final Clock clock;
-    private final Map<UUID, Payment> payments = new ConcurrentHashMap<>();
     private final PaymentLimitsProperties paymentLimitsProperties;
+    private final PaymentRepository paymentRepository;
 
-    public PaymentService(AccountService accountService, Clock clock, PaymentLimitsProperties paymentLimitsProperties) {
+    public PaymentService(AccountService accountService, Clock clock, PaymentLimitsProperties paymentLimitsProperties, PaymentRepository paymentRepository) {
         this.accountService = accountService;
         this.clock = clock;
         this.paymentLimitsProperties = paymentLimitsProperties;
+        this.paymentRepository = paymentRepository;
     }
 
     public Payment createPayment(CreatePaymentRequest request) {
@@ -45,37 +43,22 @@ public class PaymentService {
         if (request.amount().add(spentToday).compareTo(this.paymentLimitsProperties.daily()) > 0) {
             throw new DailyLimitExceededException(fromAccount.getId(), fromAccount.getCurrency(), spentToday, request.amount(), paymentLimitsProperties.daily());
         }
-        accountService.withdraw(fromAccount.getId(), request.amount());
-        accountService.deposit(toAccount.getId(), request.amount());
-        Payment payment = new Payment();
-        payment.setId(UUID.randomUUID());
-        payment.setFromAccountId(fromAccount.getId());
-        payment.setToAccountId(toAccount.getId());
-        payment.setAmount(request.amount());
-        payment.setStatus(PaymentStatus.COMPLETED);
-        payment.setPaymentType(PaymentType.TRANSFER);
-        payment.setCreatedAt(Instant.now(clock));
+        fromAccount = accountService.withdraw(fromAccount.getId(), request.amount());
+        toAccount = accountService.deposit(toAccount.getId(), request.amount());
+        Payment payment = Payment.transfer(fromAccount.getId(), toAccount.getId(), request.amount(), Instant.now(clock));
 
-        payments.put(payment.getId(), payment);
-        return payment;
+        return paymentRepository.save(payment);
     }
 
     public Payment createDeposit(CreateDepositRequest request) {
-        accountService.deposit(request.accountId(), request.amount());
-        Payment payment = new Payment();
-        payment.setId(UUID.randomUUID());
-        payment.setToAccountId(request.accountId());
-        payment.setAmount(request.amount());
-        payment.setStatus(PaymentStatus.COMPLETED);
-        payment.setPaymentType(PaymentType.DEPOSIT);
-        payment.setCreatedAt(Instant.now(clock));
+        Account depositAccount = accountService.deposit(request.accountId(), request.amount());
+        Payment payment = Payment.deposit(depositAccount.getId(), request.amount(), Instant.now(clock));
 
-        payments.put(payment.getId(), payment);
-        return payment;
+        return paymentRepository.save(payment);
     }
 
     public Optional<Payment> findById(UUID id) {
-        return Optional.ofNullable(payments.get(id));
+        return paymentRepository.findById(id);
     }
 
     public Payment getById(UUID id) {
@@ -85,10 +68,10 @@ public class PaymentService {
     private BigDecimal getSpentToday(UUID accountId) {
         BigDecimal totalAmount = BigDecimal.ZERO;
         Instant startOfDay = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
-        for (Payment payment : payments.values()) {
+        for (Payment payment : paymentRepository.findAll()) {
             if (payment.getFromAccountId() != null
                 && payment.getFromAccountId().equals(accountId)
-                && payment.getPaymentType().equals(PaymentType.TRANSFER)
+                && payment.getType().equals(PaymentType.TRANSFER)
                 && payment.getStatus().equals(PaymentStatus.COMPLETED)
                 && !payment.getCreatedAt().isBefore(startOfDay)) {
                 totalAmount = totalAmount.add(payment.getAmount());
