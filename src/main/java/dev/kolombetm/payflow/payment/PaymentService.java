@@ -66,17 +66,7 @@ public class PaymentService {
     }
 
     private BigDecimal getSpentToday(UUID accountId) {
-        BigDecimal totalAmount = BigDecimal.ZERO;
         Instant startOfDay = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
-        for (Payment payment : paymentRepository.findAll()) {
-            if (payment.getFromAccountId() != null
-                && payment.getFromAccountId().equals(accountId)
-                && payment.getType().equals(PaymentType.TRANSFER)
-                && payment.getStatus().equals(PaymentStatus.COMPLETED)
-                && !payment.getCreatedAt().isBefore(startOfDay)) {
-                totalAmount = totalAmount.add(payment.getAmount());
-            }
-        }
-        return totalAmount;
+        return paymentRepository.countSpentAfter(accountId, PaymentType.TRANSFER, PaymentStatus.COMPLETED, startOfDay);
     }
 }
