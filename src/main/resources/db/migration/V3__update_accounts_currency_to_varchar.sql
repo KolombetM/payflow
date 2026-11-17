@@ -1,0 +1,1 @@
+alter table accounts alter column currency type varchar(3);
