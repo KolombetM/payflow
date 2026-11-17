@@ -16,5 +16,5 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             and p.status = :status
             and p.createdAt >= :since
             """)
-    BigDecimal countSpentAfter(UUID accountId, PaymentType type, PaymentStatus status, Instant since);
+    BigDecimal sumSpentSince(UUID accountId, PaymentType type, PaymentStatus status, Instant since);
 }

@@ -67,6 +67,6 @@ public class PaymentService {
 
     private BigDecimal getSpentToday(UUID accountId) {
         Instant startOfDay = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
-        return paymentRepository.countSpentAfter(accountId, PaymentType.TRANSFER, PaymentStatus.COMPLETED, startOfDay);
+        return paymentRepository.sumSpentSince(accountId, PaymentType.TRANSFER, PaymentStatus.COMPLETED, startOfDay);
     }
 }
