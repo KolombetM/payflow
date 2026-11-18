@@ -3,6 +3,7 @@ package dev.kolombetm.payflow.payment;
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -26,6 +27,7 @@ public class PaymentService {
         this.paymentRepository = paymentRepository;
     }
 
+    @Transactional
     public Payment createPayment(CreatePaymentRequest request) {
         Account fromAccount = this.accountService.getById(request.fromAccountId());
         Account toAccount = this.accountService.getById(request.toAccountId());
@@ -40,7 +42,7 @@ public class PaymentService {
             throw new PaymentExceedsPerTransactionLimitException(fromAccount.getId(), toAccount.getId(), request.amount(), paymentLimitsProperties.perTransaction());
         }
         BigDecimal spentToday = getSpentToday(fromAccount.getId());
-        if (request.amount().add(spentToday).compareTo(this.paymentLimitsProperties.daily()) > 0) {
+        if (request.amount().add(spentToday).compareTo(paymentLimitsProperties.daily()) > 0) {
             throw new DailyLimitExceededException(fromAccount.getId(), fromAccount.getCurrency(), spentToday, request.amount(), paymentLimitsProperties.daily());
         }
         fromAccount = accountService.withdraw(fromAccount.getId(), request.amount());
@@ -50,6 +52,7 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
+    @Transactional
     public Payment createDeposit(CreateDepositRequest request) {
         Account depositAccount = accountService.deposit(request.accountId(), request.amount());
         Payment payment = Payment.deposit(depositAccount.getId(), request.amount(), Instant.now(clock));
