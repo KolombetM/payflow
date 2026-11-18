@@ -60,10 +60,12 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Payment> findById(UUID id) {
         return paymentRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Payment getById(UUID id) {
         return findById(id).orElseThrow(() -> new PaymentNotFoundException(id));
     }

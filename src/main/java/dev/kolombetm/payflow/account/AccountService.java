@@ -15,11 +15,13 @@ public class AccountService {
         this.accountRepository = accountRepository;
     }
 
+    @Transactional
     public Account createAccount(CreateAccountRequest request) {
         var account = new Account(request.ownerName(), request.currency());
         return accountRepository.save(account);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Account> findById(UUID id) {
         return accountRepository.findById(id);
     }
