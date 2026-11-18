@@ -1,6 +1,7 @@
 package dev.kolombetm.payflow.account;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -27,18 +28,20 @@ public class AccountService {
         return findById(id).orElseThrow(() -> new AccountNotFoundException(id));
     }
 
+    @Transactional
     public Account deposit(UUID accountId, BigDecimal amount) {
         var account = getById(accountId);
         account.setBalance(account.getBalance().add(amount));
-        return accountRepository.save(account);
+        return account;
     }
 
+    @Transactional
     public Account withdraw(UUID accountId, BigDecimal amount) {
         var account = getById(accountId);
         if (account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientFundsException(accountId, amount, account.getCurrency());
         }
         account.setBalance(account.getBalance().subtract(amount));
-        return accountRepository.save(account);
+        return account;
     }
 }
