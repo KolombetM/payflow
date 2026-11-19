@@ -3,6 +3,7 @@ package dev.kolombetm.payflow.account;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -15,6 +16,9 @@ public class Account {
     private String ownerName;
     private BigDecimal balance;
     private Currency currency;
+
+    @Version
+    private Long version;
 
     protected Account(){}
 
