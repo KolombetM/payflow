@@ -49,8 +49,8 @@ public class ConcurrentTransferTest {
         System.out.println(first.get() + " / " + second.get());
         pool.shutdown();
 
-        assertThat(accountService.getById(fromAccount.getId()).getBalance()).isEqualTo(new BigDecimal("40.00"));
-        assertThat(accountService.getById(toAccount.getId()).getBalance()).isEqualTo(new BigDecimal("60.00"));
+        assertThat(accountService.getById(fromAccount.getId()).getBalance()).isEqualByComparingTo(new BigDecimal("40.00"));
+        assertThat(accountService.getById(toAccount.getId()).getBalance()).isEqualByComparingTo(new BigDecimal("60.00"));
 
         List<String> results = List.of(first.get(), second.get());
         System.out.println(results);
