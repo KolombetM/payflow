@@ -38,18 +38,17 @@ public class AccountService {
 
     @Transactional
     public Account deposit(UUID accountId, BigDecimal amount) {
-        var account = getById(accountId);
+        var account = getByIdForUpdate(accountId);
         account.setBalance(account.getBalance().add(amount));
         return account;
     }
 
     @Transactional
     public Account withdraw(UUID accountId, BigDecimal amount) {
-        var account = getById(accountId);
+        var account = getByIdForUpdate(accountId);
         if (account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientFundsException(accountId, amount, account.getCurrency());
         }
-        try { Thread.sleep(300); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } // TODO убрать после 3.5
         account.setBalance(account.getBalance().subtract(amount));
         return account;
     }
