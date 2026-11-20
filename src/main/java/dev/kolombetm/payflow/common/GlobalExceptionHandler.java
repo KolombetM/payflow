@@ -37,7 +37,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(ConcurrencyFailureException.class)
-    public ProblemDetail handleOptimisticLockingFailure(ConcurrencyFailureException ex) {
+    public ProblemDetail handleConcurrencyFailure(ConcurrencyFailureException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Something was modified concurrently, please retry");
     }
 

@@ -33,11 +33,9 @@ public class PaymentService {
         Account toAccount;
         if (request.fromAccountId().compareTo(request.toAccountId()) < 0) {
             fromAccount = this.accountService.getByIdForUpdate(request.fromAccountId());
-            try { Thread.sleep(300); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } // TODO убрать после 3.5
             toAccount = this.accountService.getByIdForUpdate(request.toAccountId());
         } else {
             toAccount = this.accountService.getByIdForUpdate(request.toAccountId());
-            try { Thread.sleep(300); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } // TODO убрать после 3.5
             fromAccount = this.accountService.getByIdForUpdate(request.fromAccountId());
         }
 
