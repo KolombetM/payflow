@@ -29,8 +29,8 @@ public class PaymentService {
 
     @Transactional
     public Payment createPayment(CreatePaymentRequest request) {
-        Account fromAccount = this.accountService.getById(request.fromAccountId());
-        Account toAccount = this.accountService.getById(request.toAccountId());
+        Account fromAccount = this.accountService.getByIdForUpdate(request.fromAccountId());
+        Account toAccount = this.accountService.getByIdForUpdate(request.toAccountId());
 
         if (fromAccount.getId().equals(toAccount.getId())) {
             throw new SameAccountTransferException(fromAccount.getId());

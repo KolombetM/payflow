@@ -1,6 +1,7 @@
 package dev.kolombetm.payflow.account;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -28,6 +29,11 @@ public class AccountService {
 
     public Account getById(UUID id) {
         return findById(id).orElseThrow(() -> new AccountNotFoundException(id));
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Account getByIdForUpdate(UUID id) {
+        return accountRepository.findByIdForUpdate(id).orElseThrow(() -> new AccountNotFoundException(id));
     }
 
     @Transactional
