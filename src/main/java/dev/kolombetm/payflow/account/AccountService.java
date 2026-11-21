@@ -54,13 +54,13 @@ public class AccountService {
         return account;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Currency getCurrency(UUID accountId) {
         return accountRepository.findCurrencyById(accountId).orElseThrow(() -> new AccountNotFoundException(accountId));
     }
 
-    @Transactional
-    public Account getExternalAccountId(Currency currency) {
-        return accountRepository.findByTypeAndCurrency(AccountType.EXTERNAL, currency).orElseThrow(() -> new IllegalStateException());
+    @Transactional(readOnly = true)
+    public UUID getExternalAccountId(Currency currency) {
+        return accountRepository.findExternalAccountIdByCurrency(currency).orElseThrow(() -> new IllegalStateException("No EXTERNAL account configured for currency " + currency));
     }
 }

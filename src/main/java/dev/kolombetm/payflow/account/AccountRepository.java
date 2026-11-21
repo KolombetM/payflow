@@ -14,8 +14,9 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     @Query("select a from Account a where a.id = :id")
     Optional<Account> findByIdForUpdate(UUID id);
 
-    Optional<Account> findByTypeAndCurrency(AccountType type, Currency currency);
-
     @Query("select a.currency from Account a where a.id = :id")
     Optional<Currency> findCurrencyById(UUID id);
+
+    @Query("select a.id from Account a where a.type = 'EXTERNAL' and a.currency = :currency")
+    Optional<UUID> findExternalAccountIdByCurrency(Currency currency);
 }

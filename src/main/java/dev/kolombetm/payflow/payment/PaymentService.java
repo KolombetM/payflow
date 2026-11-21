@@ -2,6 +2,7 @@ package dev.kolombetm.payflow.payment;
 
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
+import dev.kolombetm.payflow.account.AccountType;
 import dev.kolombetm.payflow.ledger.LedgerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,8 +35,12 @@ public class PaymentService {
     @Transactional
     public Payment createPayment(CreatePaymentRequest request) {
         LockedAccounts accounts = lockInOrder(request.fromAccountId(), request.toAccountId());
-        Account fromAccount = accounts.from;
-        Account toAccount = accounts.to;
+        Account fromAccount = accounts.from();
+        Account toAccount = accounts.to();
+
+        if (fromAccount.getType() != toAccount.getType() || fromAccount.getType() != AccountType.CUSTOMER) {
+            throw new SystemAccountNotAllowedException();
+        }
         
         if (fromAccount.getId().equals(toAccount.getId())) {
             throw new SameAccountTransferException(fromAccount.getId());
@@ -56,8 +61,12 @@ public class PaymentService {
     @Transactional
     public Payment createDeposit(CreateDepositRequest request) {
         Currency accountCurrency = accountService.getCurrency(request.accountId());
-        Account externalAccount = accountService.getExternalAccountId(accountCurrency);
-        LockedAccounts accounts = lockInOrder(externalAccount.getId(), request.accountId());
+        UUID externalAccountId = accountService.getExternalAccountId(accountCurrency);
+        LockedAccounts accounts = lockInOrder(externalAccountId, request.accountId());
+
+        if (accounts.from().getType() != AccountType.EXTERNAL || accounts.to().getType() != AccountType.CUSTOMER) {
+            throw new SystemAccountNotAllowedException();
+        }
 
         return move(accounts, request.amount(), PaymentType.DEPOSIT);
     }
