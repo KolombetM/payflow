@@ -2,7 +2,6 @@ package dev.kolombetm.payflow.payment;
 
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
-import dev.kolombetm.payflow.ledger.LedgerEntry;
 import dev.kolombetm.payflow.ledger.LedgerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +60,7 @@ public class PaymentService {
         Payment payment = Payment.transfer(fromAccount.getId(), toAccount.getId(), request.amount(), Instant.now(clock));
 
         payment = paymentRepository.save(payment);
-        ledgerService.createLedgerEntry(payment);
+        ledgerService.recordTransfers(payment);
         return payment;
     }
 
