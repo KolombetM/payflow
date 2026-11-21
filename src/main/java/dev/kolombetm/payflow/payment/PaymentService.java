@@ -2,6 +2,8 @@ package dev.kolombetm.payflow.payment;
 
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
+import dev.kolombetm.payflow.ledger.LedgerEntry;
+import dev.kolombetm.payflow.ledger.LedgerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,12 +21,14 @@ public class PaymentService {
     private final Clock clock;
     private final PaymentLimitsProperties paymentLimitsProperties;
     private final PaymentRepository paymentRepository;
+    private final LedgerService ledgerService;
 
-    public PaymentService(AccountService accountService, Clock clock, PaymentLimitsProperties paymentLimitsProperties, PaymentRepository paymentRepository) {
+    public PaymentService(AccountService accountService, Clock clock, PaymentLimitsProperties paymentLimitsProperties, PaymentRepository paymentRepository, LedgerService ledgerService) {
         this.accountService = accountService;
         this.clock = clock;
         this.paymentLimitsProperties = paymentLimitsProperties;
         this.paymentRepository = paymentRepository;
+        this.ledgerService = ledgerService;
     }
 
     @Transactional
@@ -38,8 +42,7 @@ public class PaymentService {
             toAccount = this.accountService.getByIdForUpdate(request.toAccountId());
             fromAccount = this.accountService.getByIdForUpdate(request.fromAccountId());
         }
-
-
+        
         if (fromAccount.getId().equals(toAccount.getId())) {
             throw new SameAccountTransferException(fromAccount.getId());
         }
@@ -57,7 +60,9 @@ public class PaymentService {
         toAccount = accountService.deposit(toAccount.getId(), request.amount());
         Payment payment = Payment.transfer(fromAccount.getId(), toAccount.getId(), request.amount(), Instant.now(clock));
 
-        return paymentRepository.save(payment);
+        payment = paymentRepository.save(payment);
+        ledgerService.createLedgerEntry(payment);
+        return payment;
     }
 
     @Transactional
