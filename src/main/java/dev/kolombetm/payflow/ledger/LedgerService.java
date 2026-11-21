@@ -14,7 +14,7 @@ public class LedgerService {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    public void recordTransfers(Payment payment) {
+    public void record(Payment payment) {
         LedgerEntry ledgerEntryFrom = LedgerEntry.createLedgerEntry(payment.getId(), payment.getFromAccountId(), payment.getAmount().negate(), payment.getCreatedAt());
         LedgerEntry ledgerEntryTo = LedgerEntry.createLedgerEntry(payment.getId(), payment.getToAccountId(), payment.getAmount(), payment.getCreatedAt());
         ledgerEntryRepository.save(ledgerEntryFrom);

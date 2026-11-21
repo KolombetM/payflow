@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Currency;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,15 +33,9 @@ public class PaymentService {
 
     @Transactional
     public Payment createPayment(CreatePaymentRequest request) {
-        Account fromAccount;
-        Account toAccount;
-        if (request.fromAccountId().compareTo(request.toAccountId()) < 0) {
-            fromAccount = this.accountService.getByIdForUpdate(request.fromAccountId());
-            toAccount = this.accountService.getByIdForUpdate(request.toAccountId());
-        } else {
-            toAccount = this.accountService.getByIdForUpdate(request.toAccountId());
-            fromAccount = this.accountService.getByIdForUpdate(request.fromAccountId());
-        }
+        LockedAccounts accounts = lockInOrder(request.fromAccountId(), request.toAccountId());
+        Account fromAccount = accounts.from;
+        Account toAccount = accounts.to;
         
         if (fromAccount.getId().equals(toAccount.getId())) {
             throw new SameAccountTransferException(fromAccount.getId());
@@ -55,21 +50,16 @@ public class PaymentService {
         if (request.amount().add(spentToday).compareTo(paymentLimitsProperties.daily()) > 0) {
             throw new DailyLimitExceededException(fromAccount.getId(), fromAccount.getCurrency(), spentToday, request.amount(), paymentLimitsProperties.daily());
         }
-        fromAccount = accountService.withdraw(fromAccount.getId(), request.amount());
-        toAccount = accountService.deposit(toAccount.getId(), request.amount());
-        Payment payment = Payment.transfer(fromAccount.getId(), toAccount.getId(), request.amount(), Instant.now(clock));
-
-        payment = paymentRepository.save(payment);
-        ledgerService.recordTransfers(payment);
-        return payment;
+        return move(accounts, request.amount(), PaymentType.TRANSFER);
     }
 
     @Transactional
     public Payment createDeposit(CreateDepositRequest request) {
-        Account depositAccount = accountService.deposit(request.accountId(), request.amount());
-        Payment payment = Payment.deposit(depositAccount.getId(), request.amount(), Instant.now(clock));
+        Currency accountCurrency = accountService.getCurrency(request.accountId());
+        Account externalAccount = accountService.getExternalAccountId(accountCurrency);
+        LockedAccounts accounts = lockInOrder(externalAccount.getId(), request.accountId());
 
-        return paymentRepository.save(payment);
+        return move(accounts, request.amount(), PaymentType.DEPOSIT);
     }
 
     @Transactional(readOnly = true)
@@ -85,5 +75,23 @@ public class PaymentService {
     private BigDecimal getSpentToday(UUID accountId) {
         Instant startOfDay = LocalDate.now(clock).atStartOfDay(clock.getZone()).toInstant();
         return paymentRepository.sumSpentSince(accountId, PaymentType.TRANSFER, PaymentStatus.COMPLETED, startOfDay);
+    }
+
+    private record LockedAccounts(Account from, Account to) {}
+
+    private LockedAccounts lockInOrder(UUID fromId, UUID toId) {
+        boolean fromFirst = fromId.compareTo(toId) < 0;
+        Account first  = accountService.getByIdForUpdate(fromFirst ? fromId : toId);   // меньший id
+        Account second = accountService.getByIdForUpdate(fromFirst ? toId : fromId);   // больший id
+        return fromFirst ? new LockedAccounts(first, second) : new LockedAccounts(second, first);
+    }
+
+    private Payment move(LockedAccounts accounts, BigDecimal amount, PaymentType type) {
+        accountService.withdraw(accounts.from().getId(), amount);
+        accountService.deposit(accounts.to().getId(), amount);
+        Payment payment = paymentRepository.save(
+                Payment.create(accounts.from().getId(), accounts.to().getId(), amount, type, Instant.now(clock)));
+        ledgerService.record(payment);
+        return payment;
     }
 }

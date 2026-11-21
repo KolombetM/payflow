@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,10 +47,20 @@ public class AccountService {
     @Transactional
     public Account withdraw(UUID accountId, BigDecimal amount) {
         var account = getByIdForUpdate(accountId);
-        if (account.getType().equals(AccountType.CUSTOMER) && account.getBalance().compareTo(amount) < 0) {
+        if (account.getType() == AccountType.CUSTOMER && account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientFundsException(accountId, amount, account.getCurrency());
         }
         account.setBalance(account.getBalance().subtract(amount));
         return account;
+    }
+
+    @Transactional
+    public Currency getCurrency(UUID accountId) {
+        return accountRepository.findCurrencyById(accountId).orElseThrow(() -> new AccountNotFoundException(accountId));
+    }
+
+    @Transactional
+    public Account getExternalAccountId(Currency currency) {
+        return accountRepository.findByTypeAndCurrency(AccountType.EXTERNAL, currency).orElseThrow(() -> new IllegalStateException());
     }
 }

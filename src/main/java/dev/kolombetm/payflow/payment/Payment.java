@@ -32,12 +32,8 @@ public class Payment {
         this.createdAt = createdAt;
     }
 
-    public static Payment transfer(UUID fromAccountId, UUID toAccountId, BigDecimal amount, Instant createdAt) {
-        return new Payment(fromAccountId, toAccountId, amount, PaymentType.TRANSFER, createdAt);
-    }
-
-    public static Payment deposit(UUID toAccountId, BigDecimal amount, Instant createdAt) {
-        return new Payment(null, toAccountId, amount, PaymentType.DEPOSIT, createdAt);
+    public static Payment create(UUID fromAccountId, UUID toAccountId, BigDecimal amount, PaymentType type, Instant createdAt) {
+        return new Payment(fromAccountId, toAccountId, amount, type, createdAt);
     }
 
     public PaymentType getType() {

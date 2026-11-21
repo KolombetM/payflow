@@ -14,6 +14,8 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     @Query("select a from Account a where a.id = :id")
     Optional<Account> findByIdForUpdate(UUID id);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Account> findByTypeAndCurrency(AccountType type, Currency currency);
+
+    @Query("select a.currency from Account a where a.id = :id")
+    Optional<Currency> findCurrencyById(UUID id);
 }
