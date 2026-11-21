@@ -38,7 +38,7 @@ public class PaymentService {
         Account fromAccount = accounts.from();
         Account toAccount = accounts.to();
 
-        if (fromAccount.getType() != toAccount.getType() || fromAccount.getType() != AccountType.CUSTOMER) {
+        if (toAccount.getType() != AccountType.CUSTOMER || fromAccount.getType() != AccountType.CUSTOMER) {
             throw new SystemAccountNotAllowedException();
         }
         

@@ -62,5 +62,7 @@ public class PaymentServiceTest {
         assertThatThrownBy(() ->
                 paymentService.createPayment(new CreatePaymentRequest(externalAccount.getId(), toAccount.getId(), new BigDecimal("1000")))
         ).isInstanceOf(SystemAccountNotAllowedException.class);
+        Account toAccountAfter = accountService.getById(toAccount.getId());
+        assertThat(toAccountAfter.getBalance()).isEqualByComparingTo(toAccount.getBalance());
     }
 }
