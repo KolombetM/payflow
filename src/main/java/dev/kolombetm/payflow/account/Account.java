@@ -1,9 +1,6 @@
 package dev.kolombetm.payflow.account;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -16,6 +13,8 @@ public class Account {
     private String ownerName;
     private BigDecimal balance;
     private Currency currency;
+    @Enumerated(EnumType.STRING)
+    private AccountType type;
 
     @Version
     private Long version;
@@ -26,6 +25,7 @@ public class Account {
         this.id = UUID.randomUUID();
         this.ownerName = ownerName;
         this.currency = currency;
+        this.type = AccountType.CUSTOMER;
         this.balance = BigDecimal.ZERO;
     }
 
@@ -47,5 +47,9 @@ public class Account {
 
     public Currency getCurrency() {
         return currency;
+    }
+
+    public AccountType getType() {
+        return type;
     }
 }

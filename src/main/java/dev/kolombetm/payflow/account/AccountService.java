@@ -46,7 +46,7 @@ public class AccountService {
     @Transactional
     public Account withdraw(UUID accountId, BigDecimal amount) {
         var account = getByIdForUpdate(accountId);
-        if (account.getBalance().compareTo(amount) < 0) {
+        if (account.getType().equals(AccountType.CUSTOMER) && account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientFundsException(accountId, amount, account.getCurrency());
         }
         account.setBalance(account.getBalance().subtract(amount));
