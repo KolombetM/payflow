@@ -1,6 +1,7 @@
 package dev.kolombetm.payflow.ledger;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class ReconciliationService {
         this.ledgerEntryRepository = ledgerEntryRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public ReconciliationReport check() {
         List<String> unbalancedCurrencies = ledgerEntryRepository.findUnbalancedCurrencies();
         List<UUID> mismatchedAccounts = ledgerEntryRepository.findAccountsWithBalanceMismatch();
