@@ -1,11 +1,12 @@
-package dev.kolombetm.payflow.payment;
+package dev.kolombetm.payflow.ledger;
 
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
 import dev.kolombetm.payflow.account.CreateAccountRequest;
 import dev.kolombetm.payflow.account.InsufficientFundsException;
-import dev.kolombetm.payflow.ledger.ReconciliationReport;
-import dev.kolombetm.payflow.ledger.ReconciliationService;
+import dev.kolombetm.payflow.payment.CreateDepositRequest;
+import dev.kolombetm.payflow.payment.CreatePaymentRequest;
+import dev.kolombetm.payflow.payment.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

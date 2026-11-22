@@ -10,7 +10,7 @@ import java.util.UUID;
 @Service
 public class ReconciliationService {
 
-    private LedgerEntryRepository ledgerEntryRepository;
+    private final LedgerEntryRepository ledgerEntryRepository;
 
     ReconciliationService(LedgerEntryRepository ledgerEntryRepository) {
         this.ledgerEntryRepository = ledgerEntryRepository;
