@@ -42,16 +42,10 @@ public class PaymentService {
     public Payment createPayment(CreatePaymentRequest request, String idempotencyKey) {
         LockedAccounts accounts = lockInOrder(request.fromAccountId(), request.toAccountId());
 
-        IdempotencyKey key = idempotencyRepository.findById(idempotencyKey);
-        if (key != null) {
-            Payment exitestingPayment = paymentRepository.findById(key.getPaymentId()).orElseThrow(() -> new IllegalStateException("IdempotencyKey exists but associated payment not"));
-            if ( exitestingPayment.getFromAccountId().equals(request.fromAccountId())
-                    && exitestingPayment.getToAccountId().equals(request.toAccountId())
-                    && exitestingPayment.getAmount().compareTo(request.amount()) == 0) {
-                return exitestingPayment;
-            } else {
-                throw new IdempotencyKeyMismatchException(request.fromAccountId(), request.toAccountId(), request.amount());
-            }
+        Optional<Payment> existingPayment = findExistingPayment(
+                idempotencyKey, request.fromAccountId(), request.toAccountId(), request.amount());
+        if (existingPayment.isPresent()) {
+            return existingPayment.get();
         }
 
         Account fromAccount = accounts.from();
@@ -123,5 +117,20 @@ public class PaymentService {
         ledgerService.record(payment);
         idempotencyRepository.save(new IdempotencyKey(idempotencyKey, payment.getId(), now));
         return payment;
+    }
+
+    private Optional<Payment> findExistingPayment(String idempotencyKey, UUID fromId, UUID toId, BigDecimal amount) {
+        return idempotencyRepository.findByKey(idempotencyKey)
+                .map(key -> paymentRepository.findById(key.getPaymentId())
+                        .orElseThrow(() -> new IllegalStateException("Idempotency key exists but payment does not")))
+                .map(payment -> {
+                    boolean sameRequest = payment.getFromAccountId().equals(fromId)
+                            && payment.getToAccountId().equals(toId)
+                            && payment.getAmount().compareTo(amount) == 0;
+                    if (!sameRequest) {
+                        throw new IdempotencyKeyMismatchException(fromId, toId, amount);
+                    }
+                    return payment;
+                });
     }
 }
