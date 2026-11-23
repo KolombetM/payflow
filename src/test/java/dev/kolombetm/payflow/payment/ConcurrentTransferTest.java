@@ -78,7 +78,7 @@ public class ConcurrentTransferTest {
         return () -> {
             start.await();
             try {
-                paymentService.createPayment(new CreatePaymentRequest(from, to, amount));
+                paymentService.createPayment(new CreatePaymentRequest(from, to, amount), UUID.randomUUID().toString());
                 return "OK";
             } catch (Exception e) {
                 return e.getClass().getSimpleName() + ": " + e.getMessage();

@@ -3,6 +3,7 @@ package dev.kolombetm.payflow.payment;
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
 import dev.kolombetm.payflow.account.CreateAccountRequest;
+import dev.kolombetm.payflow.idempotency.IdempotencyKeyMismatchException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +12,13 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.Currency;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("dev")
-public class PaymentServiceTest {
+public class PaymentServicePaymentsAndDepositTest {
     @Autowired
     private AccountService accountService;
     @Autowired
@@ -24,11 +26,13 @@ public class PaymentServiceTest {
 
     private Account externalAccount;
     private Account toAccount;
+    private Account fromAccount;
 
 
     @BeforeEach
     void setUp() {
         externalAccount = accountService.getById(accountService.getExternalAccountId(Currency.getInstance("EUR")));
+        fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", Currency.getInstance("EUR")));
         toAccount = accountService.createAccount(new CreateAccountRequest("Rick", Currency.getInstance("EUR")));
     }
 
@@ -53,16 +57,35 @@ public class PaymentServiceTest {
     @Test
     void withdrawToExternalAccount() {
         assertThatThrownBy(() ->
-            paymentService.createPayment(new CreatePaymentRequest(toAccount.getId(), externalAccount.getId(), new BigDecimal("1000")))
+            paymentService.createPayment(new CreatePaymentRequest(toAccount.getId(), externalAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString())
         ).isInstanceOf(SystemAccountNotAllowedException.class);
     }
 
     @Test
     void withdrawFromExternalAccount() {
         assertThatThrownBy(() ->
-                paymentService.createPayment(new CreatePaymentRequest(externalAccount.getId(), toAccount.getId(), new BigDecimal("1000")))
+                paymentService.createPayment(new CreatePaymentRequest(externalAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString())
         ).isInstanceOf(SystemAccountNotAllowedException.class);
         Account toAccountAfter = accountService.getById(toAccount.getId());
         assertThat(toAccountAfter.getBalance()).isEqualByComparingTo(toAccount.getBalance());
+    }
+
+    @Test
+    void twoCallsWithTheSameIdempotencyKeyAndSameCreatePaymentRequest() {
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
+        String key = UUID.randomUUID().toString();
+        Payment payment1 = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("100")), key);
+        Payment payment2 = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("100")), key);
+        assertThat(payment1.getId()).isEqualTo(payment2.getId());
+    }
+
+    @Test
+    void twoCallsWithTheSameIdempotencyKeyButDifferentPaymentRequest() {
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
+        String key = UUID.randomUUID().toString();
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("100")), key);
+        assertThatThrownBy(() ->
+                paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("50")), key)
+        ).isInstanceOf(IdempotencyKeyMismatchException.class);
     }
 }

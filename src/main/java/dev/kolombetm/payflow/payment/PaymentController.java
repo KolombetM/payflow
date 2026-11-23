@@ -1,6 +1,5 @@
 package dev.kolombetm.payflow.payment;
 
-import dev.kolombetm.payflow.account.AccountResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +17,8 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest createPaymentRequest) {
-        Payment payment = paymentService.createPayment(createPaymentRequest);
+    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest createPaymentRequest, @RequestHeader("Idempotency-Key") String idempotencyKey) {
+        Payment payment = paymentService.createPayment(createPaymentRequest, idempotencyKey);
         return ResponseEntity
                 .created(URI.create("/payments/" + payment.getId()))
                 .body(PaymentResponse.from(payment));

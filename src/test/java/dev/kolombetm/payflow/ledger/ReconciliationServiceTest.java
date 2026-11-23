@@ -15,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.Currency;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -47,16 +48,16 @@ public class ReconciliationServiceTest {
     @Test
     void transfer() {
         paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         assertThat(reconciliationService.check().isConsistent()).isTrue();
     }
 
     @Test
     void declinedTransfer() {
         paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         try {
-            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         } catch (InsufficientFundsException _) {}
         assertThat(reconciliationService.check().isConsistent()).isTrue();
     }

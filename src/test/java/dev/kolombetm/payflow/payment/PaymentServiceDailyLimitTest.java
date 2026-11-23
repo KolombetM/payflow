@@ -15,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -56,19 +57,19 @@ public class PaymentServiceDailyLimitTest {
 
     @Test
     void paymentUpToExactlyTheDailyLimitIsAllowed() {
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        Payment payment = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("500")));
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
+        Payment payment = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("500")), UUID.randomUUID().toString());
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     }
 
     @Test
     void paymentOverTheDailyLimitIsDeclined() {
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         assertThatThrownBy(() ->
-            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")))
+            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString())
         )
         .isInstanceOf(DailyLimitExceededException.class);
     }
@@ -77,11 +78,11 @@ public class PaymentServiceDailyLimitTest {
     void limitResetsAtMidnightUtc() {
         clock.setInstant(Instant.parse("2026-11-14T23:59:59Z"));
 
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
 
         clock.setInstant(Instant.parse("2026-11-15T00:00:00Z"));
-        Payment payment = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        Payment payment = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.COMPLETED);
     }
 
@@ -89,12 +90,12 @@ public class PaymentServiceDailyLimitTest {
     void paymentMadeExactlyAtMidnightCountsTowardsThatDay() {
         clock.setInstant(Instant.parse("2026-11-15T00:00:00Z"));
 
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
-        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")));
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
+        paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
 
         clock.setInstant(Instant.parse("2026-11-15T12:00:00Z"));
         assertThatThrownBy(() ->
-            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")))
+            paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString())
         )
         .isInstanceOf(DailyLimitExceededException.class);
     }

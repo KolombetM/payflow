@@ -3,6 +3,9 @@ package dev.kolombetm.payflow.payment;
 import dev.kolombetm.payflow.account.Account;
 import dev.kolombetm.payflow.account.AccountService;
 import dev.kolombetm.payflow.account.AccountType;
+import dev.kolombetm.payflow.idempotency.IdempotencyKey;
+import dev.kolombetm.payflow.idempotency.IdempotencyKeyMismatchException;
+import dev.kolombetm.payflow.idempotency.IdempotencyRepository;
 import dev.kolombetm.payflow.ledger.LedgerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,18 +26,35 @@ public class PaymentService {
     private final PaymentLimitsProperties paymentLimitsProperties;
     private final PaymentRepository paymentRepository;
     private final LedgerService ledgerService;
+    private final IdempotencyRepository idempotencyRepository;
 
-    public PaymentService(AccountService accountService, Clock clock, PaymentLimitsProperties paymentLimitsProperties, PaymentRepository paymentRepository, LedgerService ledgerService) {
+    public PaymentService(AccountService accountService, Clock clock, PaymentLimitsProperties paymentLimitsProperties, PaymentRepository paymentRepository, LedgerService ledgerService, IdempotencyRepository idempotencyRepository) {
         this.accountService = accountService;
         this.clock = clock;
         this.paymentLimitsProperties = paymentLimitsProperties;
         this.paymentRepository = paymentRepository;
         this.ledgerService = ledgerService;
+        this.idempotencyRepository = idempotencyRepository;
     }
 
     @Transactional
-    public Payment createPayment(CreatePaymentRequest request) {
+    public Payment createPayment(CreatePaymentRequest request, String idempotencyKey) {
         LockedAccounts accounts = lockInOrder(request.fromAccountId(), request.toAccountId());
+
+        IdempotencyKey key = idempotencyRepository.findById(idempotencyKey);
+        if (key != null) {
+            Payment exitesdPayment = paymentRepository.findById(key.getPaymentId()).orElse(null);
+            if (exitesdPayment != null) {
+                if ( exitesdPayment.getFromAccountId().equals(request.fromAccountId())
+                        && exitesdPayment.getToAccountId().equals(request.toAccountId())
+                        && exitesdPayment.getAmount().compareTo(request.amount()) == 0) {
+                    return exitesdPayment;
+                } else {
+                    throw new IdempotencyKeyMismatchException(request.fromAccountId(), request.toAccountId(), request.amount());
+                }
+            }
+        }
+
         Account fromAccount = accounts.from();
         Account toAccount = accounts.to();
 
@@ -55,7 +75,7 @@ public class PaymentService {
         if (request.amount().add(spentToday).compareTo(paymentLimitsProperties.daily()) > 0) {
             throw new DailyLimitExceededException(fromAccount.getId(), fromAccount.getCurrency(), spentToday, request.amount(), paymentLimitsProperties.daily());
         }
-        return move(accounts, request.amount(), PaymentType.TRANSFER);
+        return move(accounts, request.amount(), PaymentType.TRANSFER, idempotencyKey);
     }
 
     @Transactional
@@ -68,7 +88,7 @@ public class PaymentService {
             throw new SystemAccountNotAllowedException();
         }
 
-        return move(accounts, request.amount(), PaymentType.DEPOSIT);
+        return move(accounts, request.amount(), PaymentType.DEPOSIT, UUID.randomUUID().toString());
     }
 
     @Transactional(readOnly = true)
@@ -95,12 +115,14 @@ public class PaymentService {
         return fromFirst ? new LockedAccounts(first, second) : new LockedAccounts(second, first);
     }
 
-    private Payment move(LockedAccounts accounts, BigDecimal amount, PaymentType type) {
+    private Payment move(LockedAccounts accounts, BigDecimal amount, PaymentType type, String idempotencyKey) {
         accountService.withdraw(accounts.from().getId(), amount);
         accountService.deposit(accounts.to().getId(), amount);
+        Instant now = Instant.now(clock);
         Payment payment = paymentRepository.save(
-                Payment.create(accounts.from().getId(), accounts.to().getId(), amount, type, Instant.now(clock)));
+                Payment.create(accounts.from().getId(), accounts.to().getId(), amount.setScale(2), type, now));
         ledgerService.record(payment);
+        idempotencyRepository.save(new IdempotencyKey(idempotencyKey, payment.getId(), now));
         return payment;
     }
 }
