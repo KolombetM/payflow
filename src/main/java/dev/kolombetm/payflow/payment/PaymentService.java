@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.Currency;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,15 +44,13 @@ public class PaymentService {
 
         IdempotencyKey key = idempotencyRepository.findById(idempotencyKey);
         if (key != null) {
-            Payment exitesdPayment = paymentRepository.findById(key.getPaymentId()).orElse(null);
-            if (exitesdPayment != null) {
-                if ( exitesdPayment.getFromAccountId().equals(request.fromAccountId())
-                        && exitesdPayment.getToAccountId().equals(request.toAccountId())
-                        && exitesdPayment.getAmount().compareTo(request.amount()) == 0) {
-                    return exitesdPayment;
-                } else {
-                    throw new IdempotencyKeyMismatchException(request.fromAccountId(), request.toAccountId(), request.amount());
-                }
+            Payment exitestingPayment = paymentRepository.findById(key.getPaymentId()).orElseThrow(() -> new IllegalStateException("IdempotencyKey exists but associated payment not"));
+            if ( exitestingPayment.getFromAccountId().equals(request.fromAccountId())
+                    && exitestingPayment.getToAccountId().equals(request.toAccountId())
+                    && exitestingPayment.getAmount().compareTo(request.amount()) == 0) {
+                return exitestingPayment;
+            } else {
+                throw new IdempotencyKeyMismatchException(request.fromAccountId(), request.toAccountId(), request.amount());
             }
         }
 
@@ -118,7 +117,7 @@ public class PaymentService {
     private Payment move(LockedAccounts accounts, BigDecimal amount, PaymentType type, String idempotencyKey) {
         accountService.withdraw(accounts.from().getId(), amount);
         accountService.deposit(accounts.to().getId(), amount);
-        Instant now = Instant.now(clock);
+        Instant now = Instant.now(clock).truncatedTo(ChronoUnit.MICROS);
         Payment payment = paymentRepository.save(
                 Payment.create(accounts.from().getId(), accounts.to().getId(), amount.setScale(2), type, now));
         ledgerService.record(payment);
