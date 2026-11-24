@@ -4,6 +4,7 @@ import dev.kolombetm.payflow.common.PageResponse;
 import dev.kolombetm.payflow.payment.Payment;
 import dev.kolombetm.payflow.payment.PaymentRepository;
 import dev.kolombetm.payflow.payment.PaymentResponse;
+import dev.kolombetm.payflow.payment.PaymentService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,11 +21,11 @@ import java.util.UUID;
 @RequestMapping("/accounts")
 public class AccountController {
     private final AccountService accountService;
-    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
 
-    public AccountController(AccountService accountService, PaymentRepository paymentRepository) {
+    public AccountController(AccountService accountService, PaymentService paymentService) {
         this.accountService = accountService;
-        this.paymentRepository = paymentRepository;
+        this.paymentService = paymentService;
     }
 
     @PostMapping
@@ -42,7 +43,7 @@ public class AccountController {
 
     @GetMapping("/{id}/payments")
     public PageResponse<PaymentResponse> getPayments(@PathVariable UUID id, @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<Payment> payments = paymentRepository.getAllPaymentsByAccountId(id, pageable);
+        Page<Payment> payments = paymentService.findByAccountId(id, pageable);
         return PageResponse.from(payments.map(PaymentResponse::from));
     }
 }

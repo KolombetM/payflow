@@ -1,6 +1,7 @@
 package dev.kolombetm.payflow.payment;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest createPaymentRequest, @RequestHeader("Idempotency-Key") String idempotencyKey) {
+    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest createPaymentRequest, @RequestHeader("Idempotency-Key") @Size(max = 100) String idempotencyKey) {
         Payment payment = paymentService.createPayment(createPaymentRequest, idempotencyKey);
         return ResponseEntity
                 .created(URI.create("/payments/" + payment.getId()))
@@ -30,7 +31,7 @@ public class PaymentController {
     }
 
     @PostMapping("/deposits")
-    public ResponseEntity<PaymentResponse> deposit(@Valid @RequestBody CreateDepositRequest request, @RequestHeader("Idempotency-Key") String idempotencyKey) {
+    public ResponseEntity<PaymentResponse> deposit(@Valid @RequestBody CreateDepositRequest request, @RequestHeader("Idempotency-Key") @Size(max = 100) String idempotencyKey) {
         var payment = this.paymentService.createDeposit(request, idempotencyKey);
         return ResponseEntity
                 .created(URI.create("/payments/" + payment.getId()))

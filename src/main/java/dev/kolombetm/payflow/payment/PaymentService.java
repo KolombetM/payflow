@@ -7,6 +7,10 @@ import dev.kolombetm.payflow.idempotency.IdempotencyKey;
 import dev.kolombetm.payflow.idempotency.IdempotencyKeyMismatchException;
 import dev.kolombetm.payflow.idempotency.IdempotencyRepository;
 import dev.kolombetm.payflow.ledger.LedgerService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,6 +116,19 @@ public class PaymentService {
         Account first  = accountService.getByIdForUpdate(fromFirst ? fromId : toId);   // меньший id
         Account second = accountService.getByIdForUpdate(fromFirst ? toId : fromId);   // больший id
         return fromFirst ? new LockedAccounts(first, second) : new LockedAccounts(second, first);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Payment> findByAccountId(UUID accountId, Pageable pageable) {
+        accountService.getById(accountId);
+
+//        Guarantee the order of payments created at the same time
+        Pageable stable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort().and(Sort.by(Sort.Direction.DESC, "id")));
+
+        return paymentRepository.getAllPaymentsByAccountId(accountId, stable);
     }
 
     private Payment move(LockedAccounts accounts, BigDecimal amount, PaymentType type, String idempotencyKey) {
