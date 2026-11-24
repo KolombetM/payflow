@@ -72,16 +72,22 @@ public class PaymentService {
     }
 
     @Transactional
-    public Payment createDeposit(CreateDepositRequest request) {
+    public Payment createDeposit(CreateDepositRequest request, String idempotencyKey) {
         Currency accountCurrency = accountService.getCurrency(request.accountId());
         UUID externalAccountId = accountService.getExternalAccountId(accountCurrency);
         LockedAccounts accounts = lockInOrder(externalAccountId, request.accountId());
+
+        Optional<Payment> existingPayment = findExistingPayment(
+                idempotencyKey, externalAccountId, request.accountId(), request.amount());
+        if (existingPayment.isPresent()) {
+            return existingPayment.get();
+        }
 
         if (accounts.from().getType() != AccountType.EXTERNAL || accounts.to().getType() != AccountType.CUSTOMER) {
             throw new SystemAccountNotAllowedException();
         }
 
-        return move(accounts, request.amount(), PaymentType.DEPOSIT, UUID.randomUUID().toString());
+        return move(accounts, request.amount(), PaymentType.DEPOSIT, idempotencyKey);
     }
 
     @Transactional(readOnly = true)

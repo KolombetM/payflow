@@ -29,7 +29,7 @@ public class ConcurrentTransferTest {
     void twoConcurrentTransfersCannotOverdraw() throws Exception {
         Account fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", Currency.getInstance("EUR")));
         Account toAccount = accountService.createAccount(new CreateAccountRequest("John", Currency.getInstance("EUR")));
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("100")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("100")), UUID.randomUUID().toString());
         ExecutorService pool = Executors.newFixedThreadPool(2);
         CountDownLatch start = new CountDownLatch(1);
 
@@ -53,8 +53,8 @@ public class ConcurrentTransferTest {
     void twoConcurrentTransfersDeadLock() throws Exception {
         Account fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", Currency.getInstance("EUR")));
         Account toAccount = accountService.createAccount(new CreateAccountRequest("John", Currency.getInstance("EUR")));
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("100")));
-        paymentService.createDeposit(new CreateDepositRequest(toAccount.getId(), new BigDecimal("100")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("100")), UUID.randomUUID().toString());
+        paymentService.createDeposit(new CreateDepositRequest(toAccount.getId(), new BigDecimal("100")), UUID.randomUUID().toString());
         ExecutorService pool = Executors.newFixedThreadPool(2);
         CountDownLatch start = new CountDownLatch(1);
 

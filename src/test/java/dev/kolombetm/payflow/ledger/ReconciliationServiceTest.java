@@ -40,21 +40,21 @@ public class ReconciliationServiceTest {
 
     @Test
     void deposit() {
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         ReconciliationReport report = reconciliationService.check();
         assertThat(report.isConsistent()).isTrue();
     }
 
     @Test
     void transfer() {
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         assertThat(reconciliationService.check().isConsistent()).isTrue();
     }
 
     @Test
     void declinedTransfer() {
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         try {
             paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());

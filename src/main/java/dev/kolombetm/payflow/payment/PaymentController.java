@@ -30,8 +30,8 @@ public class PaymentController {
     }
 
     @PostMapping("/deposits")
-    public ResponseEntity<PaymentResponse> deposit(@Valid @RequestBody CreateDepositRequest request) {
-        var payment = this.paymentService.createDeposit(request);
+    public ResponseEntity<PaymentResponse> deposit(@Valid @RequestBody CreateDepositRequest request, @RequestHeader("Idempotency-Key") String idempotencyKey) {
+        var payment = this.paymentService.createDeposit(request, idempotencyKey);
         return ResponseEntity
                 .created(URI.create("/payments/" + payment.getId()))
                 .body(PaymentResponse.from(payment));

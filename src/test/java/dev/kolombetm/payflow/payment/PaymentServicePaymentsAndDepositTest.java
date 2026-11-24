@@ -39,13 +39,13 @@ public class PaymentServicePaymentsAndDepositTest {
     @Test
     void depositToExternalAccount() {
         assertThatThrownBy(() ->
-            paymentService.createDeposit(new CreateDepositRequest(externalAccount.getId(), new BigDecimal("1000")))
+            paymentService.createDeposit(new CreateDepositRequest(externalAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString())
         ).isInstanceOf(SystemAccountNotAllowedException.class);
     }
 
     @Test
     void depositToAccount() {
-        paymentService.createDeposit(new CreateDepositRequest(toAccount.getId(), new BigDecimal("1000")));
+        paymentService.createDeposit(new CreateDepositRequest(toAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         Account externalAccountAfter = accountService.getById(accountService.getExternalAccountId(Currency.getInstance("EUR")));
         Account toAccountAfter = accountService.getById(toAccount.getId());
 
@@ -72,7 +72,7 @@ public class PaymentServicePaymentsAndDepositTest {
 
     @Test
     void twoCallsWithTheSameIdempotencyKeyAndSameCreatePaymentRequest() {
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         String key = UUID.randomUUID().toString();
         Payment payment1 = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("100")), key);
         Payment payment2 = paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("100")), key);
@@ -81,11 +81,28 @@ public class PaymentServicePaymentsAndDepositTest {
 
     @Test
     void twoCallsWithTheSameIdempotencyKeyButDifferentPaymentRequest() {
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), UUID.randomUUID().toString());
         String key = UUID.randomUUID().toString();
         paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("100")), key);
         assertThatThrownBy(() ->
                 paymentService.createPayment(new CreatePaymentRequest(fromAccount.getId(), toAccount.getId(), new BigDecimal("50")), key)
+        ).isInstanceOf(IdempotencyKeyMismatchException.class);
+    }
+
+    @Test
+    void twoDepositsWithTheSameIdempotencyKeyAndTheSameDepositData() {
+        String key = UUID.randomUUID().toString();
+        Payment payment1 = paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), key);
+        Payment payment2 = paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), key);
+        assertThat(payment1.getId()).isEqualTo(payment2.getId());
+    }
+
+    @Test
+    void twoDepositsWithTheSameIdempotencyKeyAndDifferentDepositData() {
+        String key = UUID.randomUUID().toString();
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("1000")), key);
+        assertThatThrownBy(() ->
+                paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("100")), key)
         ).isInstanceOf(IdempotencyKeyMismatchException.class);
     }
 }

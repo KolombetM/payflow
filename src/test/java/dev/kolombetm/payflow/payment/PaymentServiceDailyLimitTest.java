@@ -51,7 +51,7 @@ public class PaymentServiceDailyLimitTest {
         clock.setInstant(Instant.parse("2026-11-14T10:00:00Z"));
         fromAccount = accountService.createAccount(new CreateAccountRequest("Bob", limits.currency()));
         toAccount = accountService.createAccount(new CreateAccountRequest("Rick", limits.currency()));
-        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")));
+        paymentService.createDeposit(new CreateDepositRequest(fromAccount.getId(), new BigDecimal("5000")), UUID.randomUUID().toString());
     }
 
 
