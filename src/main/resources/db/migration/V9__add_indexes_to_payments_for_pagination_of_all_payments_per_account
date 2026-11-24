@@ -1,0 +1,2 @@
+create index from_account_payments_idx on accounts(form_account_id, created_at)
+create index to_account_payment_idx on accounts(to_account_id, created_at)

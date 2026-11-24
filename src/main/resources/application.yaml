@@ -4,6 +4,10 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  data:
+    web:
+      pageable:
+        max-page-size: 100
 management:
   endpoints:
     web:

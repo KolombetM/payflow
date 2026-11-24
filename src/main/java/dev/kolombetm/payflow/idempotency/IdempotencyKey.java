@@ -1,6 +1,7 @@
 package dev.kolombetm.payflow.idempotency;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -9,6 +10,7 @@ import java.util.UUID;
 @Table(name="idempotency_keys")
 public class IdempotencyKey {
     @Id
+    @Size(max = 100)
     private String key;
     private UUID paymentId;
     private Instant createdAt;

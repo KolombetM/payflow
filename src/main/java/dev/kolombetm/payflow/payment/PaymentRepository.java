@@ -1,5 +1,7 @@
 package dev.kolombetm.payflow.payment;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -17,4 +19,11 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             and p.createdAt >= :since
             """)
     BigDecimal sumSpentSince(UUID accountId, PaymentType type, PaymentStatus status, Instant since);
+
+    @Query("""
+        select p from Payment p
+        where p.fromAccountId = :accountId
+        or p.toAccountId = :accountId
+    """)
+    Page<Payment> getAllPaymentsByAccountId(UUID accountId, Pageable pageable);
 }
