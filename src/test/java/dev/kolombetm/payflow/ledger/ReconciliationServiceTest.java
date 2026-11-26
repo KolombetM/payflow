@@ -11,7 +11,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import dev.kolombetm.payflow.TestcontainersConfiguration;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -20,7 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
+@Import(TestcontainersConfiguration.class)
 public class ReconciliationServiceTest {
     @Autowired
     private AccountService accountService;

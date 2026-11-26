@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.utility.TestcontainersConfiguration;
+import dev.kolombetm.payflow.TestcontainersConfiguration;
 
 import java.math.BigDecimal;
 import java.util.Currency;

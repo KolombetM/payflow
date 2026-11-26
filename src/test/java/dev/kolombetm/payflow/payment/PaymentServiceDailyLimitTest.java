@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.utility.TestcontainersConfiguration;
+import dev.kolombetm.payflow.TestcontainersConfiguration;
 
 import java.math.BigDecimal;
 import java.time.Instant;
