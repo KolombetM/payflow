@@ -8,6 +8,10 @@ spring:
     web:
       pageable:
         max-page-size: 100
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
 management:
   endpoints:
     web:

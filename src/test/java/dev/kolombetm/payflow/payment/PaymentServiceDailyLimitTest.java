@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -20,7 +22,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(properties = {"payflow.limits.daily=2500", "payflow.limits.per-transaction=1000", "payflow.limits.currency=EUR"})
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
+@Import(TestcontainersConfiguration.class)
 public class PaymentServiceDailyLimitTest {
     @Autowired
     private PaymentLimitsProperties limits;
