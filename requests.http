@@ -123,7 +123,12 @@ Idempotency-Key: {{idempotencyKeyDeposit}}
 
 GET http://localhost:8080/accounts/00000000-0000-0000-0000-000000000001/payments
 
+### Trnsfer with no key
 
+POST http://localhost:8080/payments
+Content-Type: application/json
+
+{ "fromAccountId": "{{fromAccount}}", "toAccountId": "{{toAccount}}", "amount": 100 }
 
 ###
 
