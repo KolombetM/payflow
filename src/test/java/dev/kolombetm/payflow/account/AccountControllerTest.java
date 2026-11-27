@@ -36,7 +36,7 @@ class AccountControllerTest {
     PaymentService paymentService;
 
     @Test
-    void creatAccountReturns201WithLocation() throws Exception {
+    void createAccountReturns201WithLocation() throws Exception {
         Account account = new Account("Bob", Currency.getInstance("EUR"));
         when(accountService.createAccount(any())).thenReturn(account);
 
@@ -59,6 +59,7 @@ class AccountControllerTest {
                         { "ownerName": "", "currency": "EUR"}
                         """))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("ownerName"))
                 .andExpect(jsonPath("$.detail").value("Request validation failed"));
 
         verify(accountService, never()).createAccount(any());
@@ -67,7 +68,7 @@ class AccountControllerTest {
     @Test
     void getAccountThrows404ForUnknownAccount() throws Exception {
         UUID accountId = UUID.randomUUID();
-        when(accountService.getById(any())).thenThrow(new AccountNotFoundException(accountId));
+        when(accountService.getById(accountId)).thenThrow(new AccountNotFoundException(accountId));
         mockMvc.perform(get("/accounts/" + accountId))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
