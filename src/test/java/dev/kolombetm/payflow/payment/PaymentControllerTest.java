@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Currency;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -19,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PaymentController.class)
-public class PaymentControllerTest {
+class PaymentControllerTest {
 
     @Autowired
     MockMvc mockMvc;
@@ -46,18 +47,16 @@ public class PaymentControllerTest {
     }
 
     @Test
-    void createPaymentThrows400WithNoIdenpotencyKey() throws Exception {
+    void createPaymentThrows400WithNoIdempotencyKey() throws Exception {
         UUID from = UUID.randomUUID();
         UUID to = UUID.randomUUID();
-        Payment payment = Payment.create(from, to, new BigDecimal("50.00"), PaymentType.TRANSFER, Instant.now());
-        when(paymentService.createPayment(any(), any())).thenReturn(payment);
 
         mockMvc.perform(post("/payments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                                 { "fromAccountId": "%s", "toAccountId": "%s", "amount": 50.00 }
                                 """.formatted(from, to)))
-                .andExpect(status().is4xxClientError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").value("Required header 'Idempotency-Key' is not present."));
         verify(paymentService, never()).createPayment(any(), any());
     }
@@ -66,8 +65,6 @@ public class PaymentControllerTest {
     void createPaymentThrows400WithInvalidAmount() throws Exception {
         UUID from = UUID.randomUUID();
         UUID to = UUID.randomUUID();
-        Payment payment = Payment.create(from, to, new BigDecimal("50.00"), PaymentType.TRANSFER, Instant.now());
-        when(paymentService.createPayment(any(), any())).thenReturn(payment);
 
         mockMvc.perform(post("/payments")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,8 +72,8 @@ public class PaymentControllerTest {
                         .content("""
                                 { "fromAccountId": "%s", "toAccountId": "%s", "amount": -50.00 }
                                 """.formatted(from, to)))
-                .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("$.detail").value("Validation failure"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Request validation failed"));
         verify(paymentService, never()).createPayment(any(), any());
     }
 
@@ -84,7 +81,9 @@ public class PaymentControllerTest {
     void createPaymentThrows422WhenInsufficientFunds() throws Exception {
         UUID from = UUID.randomUUID();
         UUID to = UUID.randomUUID();
-        when(paymentService.createPayment(any(), any())).thenThrow(InsufficientFundsException.class);
+        BigDecimal amount = new BigDecimal("50.00");
+        Currency currency = Currency.getInstance("EUR");
+        when(paymentService.createPayment(any(), any())).thenThrow(new InsufficientFundsException(from, amount, currency));
 
         mockMvc.perform(post("/payments")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -92,8 +91,9 @@ public class PaymentControllerTest {
                         .content("""
                                 { "fromAccountId": "%s", "toAccountId": "%s", "amount": 50.00 }
                                 """.formatted(from, to)))
-                .andExpect(status().is4xxClientError())
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
+                .andExpect(status().is(422))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+                .andExpect(jsonPath("$.detail").value("Account: " + from + " doesn't have enough funds. Requested: " + amount + " " + currency));
     }
 
     @Test
@@ -108,7 +108,9 @@ public class PaymentControllerTest {
                         .content("""
                                 { "fromAccountId": "%s", "toAccountId": "%s", "amount": 50.00 }
                                 """.formatted(from, to)))
-                .andExpect(status().is4xxClientError())
+                .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
+
+        verify(paymentService, never()).createPayment(any(), any());
     }
 }
