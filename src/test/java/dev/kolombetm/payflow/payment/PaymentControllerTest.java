@@ -73,6 +73,7 @@ class PaymentControllerTest {
                                 { "fromAccountId": "%s", "toAccountId": "%s", "amount": -50.00 }
                                 """.formatted(from, to)))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("amount"))
                 .andExpect(jsonPath("$.detail").value("Request validation failed"));
         verify(paymentService, never()).createPayment(any(), any());
     }
@@ -109,6 +110,7 @@ class PaymentControllerTest {
                                 { "fromAccountId": "%s", "toAccountId": "%s", "amount": 50.00 }
                                 """.formatted(from, to)))
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("idempotencyKey"))
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE));
 
         verify(paymentService, never()).createPayment(any(), any());
